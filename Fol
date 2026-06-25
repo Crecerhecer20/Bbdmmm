@@ -171,9 +171,16 @@ local hotbarTools = {
 	nil,nil,nil,nil,nil
 }
 
+task.wait(0.5)
+
+local startTools = getTools()
+
+for i = 1,5 do
+	hotbarTools[i] = startTools[i]
+end
+
 
 local function equip(tool)
-	if not tool then return end
 
 	local char = player.Character
 	if not char then return end
@@ -181,9 +188,18 @@ local function equip(tool)
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if not hum then return end
 
-	if char:FindFirstChild(tool.Name) then
+	local equipped = char:FindFirstChildOfClass("Tool")
+
+	if equipped == tool then
 		hum:UnequipTools()
-	else
+		return
+	end
+
+	hum:UnequipTools()
+
+	task.wait()
+
+	if tool then
 		hum:EquipTool(tool)
 	end
 end
@@ -242,14 +258,14 @@ local function refresh()
 
 			b.InputBegan:Connect(function(input)
 
-				if input.UserInputType ==
-					Enum.UserInputType.MouseButton1
-					or input.UserInputType ==
-					Enum.UserInputType.Touch then
+	if input.UserInputType ==
+		Enum.UserInputType.MouseButton1
+		or input.UserInputType ==
+		Enum.UserInputType.Touch then
 
-					dragging = tool
-				end
-			end)
+		dragging = tool
+	end
+end)
 		end
 	end
 end
