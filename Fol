@@ -306,4 +306,4 @@ for i=1,5 do
 	hotbarTools[i] = start[i]
 end
 
-refresh()
+refresh()!
