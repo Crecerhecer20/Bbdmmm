@@ -1,27 +1,25 @@
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
+local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
 pcall(function()
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack,false)
 end)
 
+
 local gui = Instance.new("ScreenGui")
-gui.Name = "CombatInventory"
+gui.Name = "CombatStyleInventory"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.Parent = player.PlayerGui
 
-local scale = Instance.new("UIScale")
-scale.Scale = 1
-scale.Parent = gui
 
 local hotbar = Instance.new("Frame")
-hotbar.Name = "Hotbar"
-hotbar.AnchorPoint = Vector2.new(0.5,1)
-hotbar.Position = UDim2.new(0.5,0,1,-25)
 hotbar.Size = UDim2.new(0,390,0,65)
+hotbar.AnchorPoint = Vector2.new(0.5,1)
+hotbar.Position = UDim2.new(0.5,0,1,-10)
 hotbar.BackgroundTransparency = 1
 hotbar.ZIndex = 10
 hotbar.Parent = gui
@@ -35,91 +33,77 @@ layout.Parent = hotbar
 
 
 local slots = {}
-
-local function createSlot(number)
-	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(0,60,0,60)
-	frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	frame.BorderSizePixel = 0
-	frame.ZIndex = 10
-	frame.Parent = hotbar
+local hotbarTools = {nil,nil,nil,nil,nil}
 
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,8)
-	corner.Parent = frame
+local function makeSlot(i)
+
+	local f = Instance.new("Frame")
+	f.Size = UDim2.new(0,60,0,60)
+	f.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	f.BackgroundTransparency = 0.25
+	f.ZIndex = 10
+	f.Parent = hotbar
+
+
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0,8)
+	c.Parent = f
 
 
 	local num = Instance.new("TextLabel")
 	num.Size = UDim2.new(0,20,0,20)
-	num.Position = UDim2.new(0,5,0,2)
 	num.BackgroundTransparency = 1
-	num.Text = number
-	num.TextColor3 = Color3.fromRGB(180,180,180)
-	num.TextSize = 14
+	num.Text = i
+	num.TextColor3 = Color3.new(1,1,1)
 	num.ZIndex = 11
-	num.Parent = frame
+	num.Parent = f
 
 
 	local name = Instance.new("TextLabel")
-	name.Name = "ItemName"
+	name.Name = "Name"
 	name.AnchorPoint = Vector2.new(0.5,0.5)
 	name.Position = UDim2.new(0.5,0,0.55,0)
-	name.Size = UDim2.new(0.9,0,0.5,0)
+	name.Size = UDim2.new(.9,0,.5,0)
 	name.BackgroundTransparency = 1
-	name.Text = ""
-	name.TextColor3 = Color3.new(1,1,1)
 	name.TextScaled = true
 	name.TextWrapped = true
+	name.TextColor3 = Color3.new(1,1,1)
 	name.ZIndex = 11
-	name.Parent = frame
+	name.Parent = f
 
 
-	slots[number] = {
-		Frame = frame,
-		Name = name,
-		Tool = nil
+	slots[i] = {
+		Frame=f,
+		Name=name,
+		Tool=nil
 	}
-
-	return frame
 end
 
 
-for i = 1,5 do
-	createSlot(i)
+for i=1,5 do
+	makeSlot(i)
 end
 
 
 local invButton = Instance.new("TextButton")
 invButton.Size = UDim2.new(0,60,0,60)
-invButton.BackgroundColor3 = Color3.fromRGB(45,45,45)
 invButton.Text = "☰"
-invButton.TextColor3 = Color3.new(1,1,1)
-invButton.TextSize = 28
+invButton.TextScaled = true
+invButton.BackgroundColor3 = Color3.fromRGB(45,45,45)
 invButton.ZIndex = 10
 invButton.Parent = hotbar
 
 
-local c = Instance.new("UICorner")
-c.CornerRadius = UDim.new(0,8)
-c.Parent = invButton
-
-
-
 local inv = Instance.new("Frame")
-inv.Name = "Inventory"
-inv.AnchorPoint = Vector2.new(0.5,1)
-inv.Position = UDim2.new(0.5,0,1,-105)
 inv.Size = UDim2.new(0,380,0,260)
+inv.AnchorPoint = Vector2.new(0.5,1)
+inv.Position = UDim2.new(0.5,0,1,-85)
 inv.BackgroundColor3 = Color3.fromRGB(25,25,25)
+inv.BackgroundTransparency = 0.5
 inv.Visible = false
-inv.ZIndex = 5
+inv.ZIndex = 1
 inv.Parent = gui
-
-
-local invCorner = Instance.new("UICorner")
-invCorner.CornerRadius = UDim.new(0,12)
-invCorner.Parent = inv
 
 
 local scroll = Instance.new("ScrollingFrame")
@@ -127,7 +111,7 @@ scroll.Size = UDim2.new(1,-10,1,-10)
 scroll.Position = UDim2.new(0,5,0,5)
 scroll.BackgroundTransparency = 1
 scroll.ScrollBarThickness = 5
-scroll.ZIndex = 6
+scroll.ZIndex = 2
 scroll.Parent = inv
 
 
@@ -137,47 +121,27 @@ grid.CellPadding = UDim2.new(0,5,0,5)
 grid.Parent = scroll
 
 
-invButton.MouseButton1Click:Connect(function()
-	inv.Visible = not inv.Visible
-end)
-local UIS = game:GetService("UserInputService")
+local function tools()
 
-local dragging = nil
-local dragStart
-
-
-local function getTools()
-	local list = {}
+	local t = {}
 
 	for _,v in ipairs(player.Backpack:GetChildren()) do
 		if v:IsA("Tool") then
-			table.insert(list,v)
+			table.insert(t,v)
 		end
 	end
 
 	if player.Character then
 		for _,v in ipairs(player.Character:GetChildren()) do
 			if v:IsA("Tool") then
-				table.insert(list,v)
+				table.insert(t,v)
 			end
 		end
 	end
 
-	return list
+	return t
 end
 
-
-local hotbarTools = {
-	nil,nil,nil,nil,nil
-}
-
-task.wait(0.5)
-
-local startTools = getTools()
-
-for i = 1,5 do
-	hotbarTools[i] = startTools[i]
-end
 
 
 local function equip(tool)
@@ -188,33 +152,26 @@ local function equip(tool)
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if not hum then return end
 
-	local equipped = char:FindFirstChildOfClass("Tool")
-
-	if equipped == tool then
+	if char:FindFirstChild(tool.Name) then
 		hum:UnequipTools()
-		return
-	end
-
-	hum:UnequipTools()
-
-	task.wait()
-
-	if tool then
+	else
+		hum:UnequipTools()
+		task.wait()
 		hum:EquipTool(tool)
 	end
 end
 
 
+
+local dragging = nil
+
+
 local function refresh()
-	local tools = getTools()
 
 	for i=1,5 do
-		if hotbarTools[i] then
-			slots[i].Tool = hotbarTools[i]
-		end
-
+		slots[i].Tool = hotbarTools[i]
 		slots[i].Name.Text =
-			slots[i].Tool and slots[i].Tool.Name or ""
+			hotbarTools[i] and hotbarTools[i].Name or ""
 	end
 
 
@@ -225,29 +182,25 @@ local function refresh()
 	end
 
 
-	for _,tool in ipairs(tools) do
-		
-		local found = false
+	for _,tool in ipairs(tools()) do
 
-		for _,t in ipairs(hotbarTools) do
-			if t == tool then
-				found = true
+		local inside = false
+
+		for _,h in ipairs(hotbarTools) do
+			if h == tool then
+				inside = true
 			end
 		end
 
-		if not found then
+
+		if not inside then
 
 			local b = Instance.new("TextButton")
 			b.Size = UDim2.new(0,110,0,45)
-			b.BackgroundColor3 =
-				Color3.fromRGB(45,45,45)
-
 			b.Text = tool.Name
-			b.TextColor3 =
-				Color3.new(1,1,1)
-
 			b.TextScaled = true
-			b.ZIndex = 7
+			b.TextWrapped = true
+			b.ZIndex = 3
 			b.Parent = scroll
 
 
@@ -258,14 +211,12 @@ local function refresh()
 
 			b.InputBegan:Connect(function(input)
 
-	if input.UserInputType ==
-		Enum.UserInputType.MouseButton1
-		or input.UserInputType ==
-		Enum.UserInputType.Touch then
+				if inv.Visible then
+					dragging = tool
+				end
 
-		dragging = tool
-	end
-end)
+			end)
+
 		end
 	end
 end
@@ -276,51 +227,44 @@ for i=1,5 do
 
 	slots[i].Frame.InputBegan:Connect(function(input)
 
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or input.UserInputType ==
-			Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 
 			if dragging then
-
-				hotbarTools[i], dragging =
-					dragging, hotbarTools[i]
-
+				hotbarTools[i],dragging =
+					dragging,hotbarTools[i]
 				refresh()
-
 			elseif slots[i].Tool then
 				equip(slots[i].Tool)
 			end
+
 		end
+
 	end)
 
 end
 
 
-
 UIS.InputEnded:Connect(function(input)
 
 	if input.UserInputType ==
-		Enum.UserInputType.MouseButton1
-		or input.UserInputType ==
-		Enum.UserInputType.Touch then
+		Enum.UserInputType.MouseButton1 then
 
 		dragging = nil
-
 	end
+
 end)
 
 
 
-player.Backpack.ChildAdded:Connect(function()
-	task.wait()
+invButton.MouseButton1Click:Connect(function()
+	inv.Visible = not inv.Visible
 	refresh()
 end)
 
-player.Backpack.ChildRemoved:Connect(function()
-	task.wait()
-	refresh()
-end)
+
+
+player.Backpack.ChildAdded:Connect(refresh)
+player.Backpack.ChildRemoved:Connect(refresh)
 
 
 player.CharacterAdded:Connect(function()
@@ -328,5 +272,14 @@ player.CharacterAdded:Connect(function()
 	refresh()
 end)
 
+
+
+task.wait(.5)
+
+local start = tools()
+
+for i=1,5 do
+	hotbarTools[i] = start[i]
+end
 
 refresh()
