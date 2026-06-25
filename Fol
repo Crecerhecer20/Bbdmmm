@@ -158,12 +158,20 @@ local function equip(tool)
 		hum:UnequipTools()
 		task.wait()
 		hum:EquipTool(tool)
+selected = tool
+
+for _,s in pairs(slots) do
+	if s.Tool == tool then
+		s.Frame.BackgroundColor3 = Color3.fromRGB(90,90,90)
+	else
+		s.Frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	end
 end
 
 
 
 local dragging = nil
+local selected = nil
 
 
 local function refresh()
@@ -205,8 +213,17 @@ local function refresh()
 
 
 			b.MouseButton1Click:Connect(function()
-				equip(tool)
-			end)
+
+	equip(tool)
+
+end)
+
+
+b.MouseButton1Down:Connect(function()
+	if inv.Visible then
+		dragging = tool
+	end
+end)
 
 
 			b.InputBegan:Connect(function(input)
@@ -227,19 +244,26 @@ for i=1,5 do
 
 	slots[i].Frame.InputBegan:Connect(function(input)
 
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if input.UserInputType ==
+		Enum.UserInputType.MouseButton1 then
 
-			if dragging then
-				hotbarTools[i],dragging =
-					dragging,hotbarTools[i]
-				refresh()
-			elseif slots[i].Tool then
-				equip(slots[i].Tool)
-			end
+
+		if dragging then
+
+			hotbarTools[i],dragging =
+				dragging,hotbarTools[i]
+
+			refresh()
+
+		elseif slots[i].Tool then
+
+			equip(slots[i].Tool)
 
 		end
 
-	end)
+	end
+
+end)
 
 end
 
